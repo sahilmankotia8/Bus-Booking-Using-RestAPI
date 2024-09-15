@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Booking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin: 20px;
+        }
+
+        h1 {
+            display: inline-block;
+        }
+
+        .filter {
+            display: inline-block;
+            margin-left: 20px;
+        }
+
+        label {
+            display: inline-block;
+            width: 100px;
+            margin-top: 10px;
+        }
+
+        input, select {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 200px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+        }
+
+        .booking-details {
+            margin-top: 20px;
+        }
+
+        .booking-details p {
+            margin-bottom: 10px;
+        }
+
+        .action-links {
+            display: inline;
+            margin-left: 20px;
+        }
+
+        .action-links a {
+            margin-left: 10px;
+            text-decoration: none;
+            color: blue;
+        }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+
+        .bookings-list {
+            margin-top: 20px;
+        }
+
+        .booking {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js" integrity="sha512-DdX/YwF5e41Ok+AI81HI8f5/5UsoxCVT9GKYZRIzpLxb8Twz4ZwPPX+jQMwMhNQ9b5+zDEefc+dcvQoPWGNZ3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Bus Booking</h1>
+
+        <!-- Filter Drop-down -->
+        <div class="filter">
+            <label for="filter">Filter:</label>
+            <select id="filter" name="filter" onchange="filterBookings()">
+                <option value="all">All</option>
+                <option value="bus-1">Bus 1</option>
+                <option value="bus-2">Bus 2</option>
+                <option value="bus-3">Bus 3</option>
+            </select>
+        </div>
+        
+        <form id="booking-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="phone">Phone:</label>
+            <input type="text" id="phone" name="phone" required><br>
+
+            <label for="bus-number">Bus Number:</label>
+            <select id="bus-number" name="bus-number">
+                <option value="bus-1">Bus 1</option>
+                <option value="bus-2">Bus 2</option>
+                <option value="bus-3">Bus 3</option>
+            </select><br>
+
+            <button type="button" onclick="addBooking()">Book</button>
+            <button type="button" class="hidden" id="update-booking" onclick="updateBooking()">Update</button>
+        </form>
+
+        <div class="bookings-list" id="bookings-list"></div>
+    </div>
+
+    <script>
+        let bookings = [];
+        let editIndex = -1;
+        
+        const API_URL = 'https://crudcrud.com/api/251f1fa7d2ed4c4286713f9a7e245724/bookings';
+        // Function to add a booking
+        function addBooking() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const busNumber = document.getElementById('bus-number').value;
+
+        const newBooking = {
+            name: name,
+            email: email,
+            phone: phone,
+            busNumber: busNumber
+        };
+
+        // Add new booking to the list locally
+        bookings.push(newBooking);
+
+        // Save the booking to CRUD CRUD using axios
+        axios.post(API_URL, newBooking)
+            .then(response => {
+                console.log('Booking saved to server:', response.data);
+            })
+            .catch(error => {
+                console.error('Error saving booking:', error);
+            });
+
+        // Reset form
+        document.getElementById('booking-form').reset();
+
+        // Display the updated bookings
+        displayBookings();
+    }
+
+        // Function to display bookings
+        function displayBookings() {
+            const bookingList = document.getElementById('bookings-list');
+            bookingList.innerHTML = '';
+
+            bookings.forEach((booking, index) => {
+                bookingList.innerHTML += `
+                    <div class="booking" data-bus="${booking.busNumber}">
+                        <p>${booking.name} &nbsp; ${booking.email} &nbsp; ${booking.phone} &nbsp; ${booking.busNumber.toUpperCase()}
+                            <span class="action-links">
+                                <a href="javascript:void(0)" onclick="deleteBooking(${index})">DELETE</a> |
+                                <a href="javascript:void(0)" onclick="editBooking(${index})">EDIT</a>
+                            </span>
+                        </p>
+                    </div>
+                `;
+            });
+
+            // Apply the current filter
+            filterBookings();
+        }
+
+        // Function to delete a booking
+        function deleteBooking(index) {
+            bookings.splice(index, 1);
+            displayBookings();
+        }
+
+        // Function to edit a booking
+        function editBooking(index) {
+            const booking = bookings[index];
+            document.getElementById('name').value = booking.name;
+            document.getElementById('email').value = booking.email;
+            document.getElementById('phone').value = booking.phone;
+            document.getElementById('bus-number').value = booking.busNumber;
+
+            // Show "Update" button and hide "Book" button
+            document.getElementById('update-booking').classList.remove('hidden');
+            document.querySelector('button[onclick="addBooking()"]').classList.add('hidden');
+
+            editIndex = index;
+        }
+
+        // Function to update the booking
+        function updateBooking() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const busNumber = document.getElementById('bus-number').value;
+
+        const updatedBooking = {
+            name: name,
+            email: email,
+            phone: phone,
+            busNumber: busNumber
+        };
+
+        bookings[editIndex] = updatedBooking;
+
+        // Make the update to CRUD CRUD using axios
+        // Assuming you need to make a PUT request, you'll have to get the unique ID from the database.
+        // axios.put(`${API_URL}/${bookingId}`, updatedBooking)
+
+        // Reset form
+        document.getElementById('booking-form').reset();
+        document.getElementById('update-booking').classList.add('hidden');
+        document.querySelector('button[onclick="addBooking()"]').classList.remove('hidden');
+
+        // Display updated bookings
+        displayBookings();
+
+        editIndex = -1;
+    }
+
+        // Function to filter bookings based on bus number
+        function filterBookings() {
+            const filter = document.getElementById('filter').value;
+            const bookingsDivs = document.querySelectorAll('.booking');
+
+            bookingsDivs.forEach(booking => {
+                if (filter === 'all' || booking.getAttribute('data-bus') === filter) {
+                    booking.style.display = 'block';
+                } else {
+                    booking.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
